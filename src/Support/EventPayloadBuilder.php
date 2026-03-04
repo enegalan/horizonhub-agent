@@ -271,6 +271,14 @@ class EventPayloadBuilder {
         if ($availableAt > 0) {
             return date('c', $availableAt);
         }
+        /** @var int|float|string|null $pushedAt */
+        $pushedAt = isset($payload['pushedAt']) ? $payload['pushedAt'] : null;
+        if ($pushedAt !== null && is_numeric($pushedAt)) {
+            $pushedAtFloat = (float) $pushedAt;
+            if ($pushedAtFloat > 0) {
+                return date('c', (int) $pushedAtFloat);
+            }
+        }
         return null;
     }
 }
