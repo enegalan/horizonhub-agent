@@ -19,13 +19,18 @@ use Laravel\Horizon\Events\SupervisorLooped;
 
 class PushHorizonEventToHub {
     /**
+     * @var HubClient
+     */
+    private $client;
+
+    /**
      * Construct the push horizon event to hub listener.
      *
      * @param HubClient $client
      */
-    public function __construct(
-        private readonly HubClient $client
-    ) {}
+    public function __construct(HubClient $client) {
+        $this->client = $client;
+    }
 
     /**
      * Handle the push horizon event to hub.
