@@ -43,6 +43,21 @@ class HorizonHubActionController {
     }
 
     /**
+     * Cancel a job.
+     *
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function cancel(string $id): JsonResponse {
+        try {
+            Artisan::call('queue:forget', ['id' => $id]);
+            return response()->json(['message' => 'Job cancellation requested']);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Pause a queue.
      *
      * @param Request $request

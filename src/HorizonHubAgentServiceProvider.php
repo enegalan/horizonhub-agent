@@ -53,6 +53,7 @@ class HorizonHubAgentServiceProvider extends ServiceProvider {
 
         Route::middleware($middleware)->prefix('horizon-hub')->group(function (): void {
             Route::post('jobs/{id}/retry', [HorizonHubActionController::class, 'retry'])->name('horizon-hub.jobs.retry');
+            Route::post('jobs/{id}/cancel', [HorizonHubActionController::class, 'cancel'])->name('horizon-hub.jobs.cancel');
             Route::delete('jobs/{id}/delete', [HorizonHubActionController::class, 'delete'])->name('horizon-hub.jobs.delete');
             Route::post('queues/{name}/pause', [HorizonHubActionController::class, 'pause'])->name('horizon-hub.queues.pause');
             Route::post('queues/{name}/resume', [HorizonHubActionController::class, 'resume'])->name('horizon-hub.queues.resume');
