@@ -12,7 +12,7 @@ class HubClient {
         $url = \rtrim(\config('horizonhub.hub_url'), '/') . \config('horizonhub.events_path');
         $apiKey = \config('horizonhub.api_key');
 
-        if (\empty($url) || \empty($apiKey)) {
+        if (empty($url) || empty($apiKey)) {
             if (! self::$logged_missing_config) {
                 self::$logged_missing_config = true;
                 Log::warning('Horizon Hub Agent: HORIZON_HUB_URL or HORIZON_HUB_API_KEY not set; events are not sent to the hub.');

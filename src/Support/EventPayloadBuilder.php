@@ -82,8 +82,8 @@ class EventPayloadBuilder {
         $conn = \property_exists($event, 'connectionName') ? $event->connectionName : 'redis';
         $queueName = \property_exists($event, 'queue') ? $event->queue : 'default';
         $queue = $conn . '.' . $queueName;
-        $decoded = \isset($event->payload->decoded) ? $event->payload->decoded : [];
-        $name = \isset($decoded['displayName']) ? $decoded['displayName'] : null;
+        $decoded = isset($event->payload->decoded) ? $event->payload->decoded : [];
+        $name = isset($decoded['displayName']) ? $decoded['displayName'] : null;
         $result = [
             'event_type' => 'JobProcessing',
             'job_id' => $jobId,
@@ -122,11 +122,11 @@ class EventPayloadBuilder {
      * Returns runtime in seconds since JobProcessing and removes the stored start time.
      */
     private static function popRuntimeSeconds(string $jobId): ?float {
-        if ($jobId === '' || ! \isset(self::$jobStartedAt[$jobId])) {
+        if ($jobId === '' || ! isset(self::$jobStartedAt[$jobId])) {
             return null;
         }
         $start = self::$jobStartedAt[$jobId];
-        \unset(self::$jobStartedAt[$jobId]);
+        unset(self::$jobStartedAt[$jobId]);
         $seconds = \microtime(true) - $start;
         return $seconds >= 0 ? $seconds : null;
     }
@@ -139,7 +139,7 @@ class EventPayloadBuilder {
      */
     public static function fromSupervisorLooped(object $event): array {
         $supervisorName = 'default';
-        if (\property_exists($event, 'supervisor') && \isset($event->supervisor)) {
+        if (\property_exists($event, 'supervisor') && isset($event->supervisor)) {
             $supervisorName = isset($event->supervisor->name) ? (string) $event->supervisor->name : 'default';
         }
         return [
@@ -226,7 +226,7 @@ class EventPayloadBuilder {
                 if (\is_string($payload)) {
                     $payload = \json_decode($payload, true) ?: [];
                 }
-                if (\isset($payload['uuid'])) {
+                if (isset($payload['uuid'])) {
                     $jobId = (string) $payload['uuid'];
                 }
             }
@@ -262,17 +262,17 @@ class EventPayloadBuilder {
      */
     private static function queuedAtFromPayload(array $payload): ?string {
         /** @var int|null $createdAt */
-        $createdAt = \isset($payload['created_at']) ? (int) $payload['created_at'] : null;
+        $createdAt = isset($payload['created_at']) ? (int) $payload['created_at'] : null;
         if ($createdAt > 0) {
             return \date('c', $createdAt);
         }
         /** @var int|null $availableAt */
-        $availableAt = \isset($payload['available_at']) ? (int) $payload['available_at'] : null;
+        $availableAt = isset($payload['available_at']) ? (int) $payload['available_at'] : null;
         if ($availableAt > 0) {
             return \date('c', $availableAt);
         }
         /** @var int|float|string|null $pushedAt */
-        $pushedAt = \isset($payload['pushedAt']) ? $payload['pushedAt'] : null;
+        $pushedAt = isset($payload['pushedAt']) ? $payload['pushedAt'] : null;
         if ($pushedAt !== null && \is_numeric($pushedAt)) {
             $pushedAtFloat = (float) $pushedAt;
             if ($pushedAtFloat > 0) {

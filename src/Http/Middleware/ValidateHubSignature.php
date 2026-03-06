@@ -37,7 +37,7 @@ class ValidateHubSignature {
      */
     public function handle(Request $request, Closure $next): Response {
         $apiKey = \config('horizonhub.api_key');
-        if (\empty($apiKey)) {
+        if (empty($apiKey)) {
             return \response()->json(['message' => 'Agent not configured'], 503);
         }
 
@@ -45,7 +45,7 @@ class ValidateHubSignature {
         $timestamp = $request->header(self::TIMESTAMP_HEADER);
         $signature = $request->header(self::SIGNATURE_HEADER);
 
-        if (\empty($incomingKey) || \empty($timestamp) || \empty($signature)) {
+        if (empty($incomingKey) || empty($timestamp) || empty($signature)) {
             return \response()->json(['message' => 'Missing API key, timestamp or signature'], 401);
         }
 
