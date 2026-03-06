@@ -17,13 +17,13 @@ class HorizonHubActionController {
     public function retry(string $id): JsonResponse {
         try {
             Artisan::call('queue:retry', ['id' => $id]);
-            $output = trim(Artisan::output());
-            if (str_contains($output, 'retried') || str_contains($output, 'The failed job')) {
-                return response()->json(['message' => 'Job retry dispatched']);
+            $output = \trim(Artisan::output());
+            if (\str_contains($output, 'retried') || \str_contains($output, 'The failed job')) {
+                return \response()->json(['message' => 'Job retry dispatched']);
             }
-            return response()->json(['message' => $output ?: 'Retry attempted'], 400);
+            return \response()->json(['message' => $output ?: 'Retry attempted'], 400);
         } catch (\Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
+            return \response()->json(['message' => $e->getMessage()], 500);
         }
     }
 
@@ -36,9 +36,9 @@ class HorizonHubActionController {
     public function delete(string $id): JsonResponse {
         try {
             Artisan::call('queue:forget', ['id' => $id]);
-            return response()->json(['message' => 'Job removed from failed queue']);
+            return \response()->json(['message' => 'Job removed from failed queue']);
         } catch (\Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
+            return \response()->json(['message' => $e->getMessage()], 500);
         }
     }
 
@@ -53,9 +53,9 @@ class HorizonHubActionController {
         [$connection, $queue] = $this->parseQueueName($name);
         try {
             Queue::pause($connection, $queue);
-            return response()->json(['message' => 'Queue paused']);
+            return \response()->json(['message' => 'Queue paused']);
         } catch (\Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
+            return \response()->json(['message' => $e->getMessage()], 500);
         }
     }
 
@@ -70,9 +70,9 @@ class HorizonHubActionController {
         [$connection, $queue] = $this->parseQueueName($name);
         try {
             Queue::resume($connection, $queue);
-            return response()->json(['message' => 'Queue resumed']);
+            return \response()->json(['message' => 'Queue resumed']);
         } catch (\Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
+            return \response()->json(['message' => $e->getMessage()], 500);
         }
     }
 
@@ -83,8 +83,8 @@ class HorizonHubActionController {
      * @return array
      */
     private function parseQueueName(string $name): array {
-        if (str_contains($name, '.')) {
-            $parts = explode('.', $name, 2);
+        if (\str_contains($name, '.')) {
+            $parts = \explode('.', $name, 2);
             return [$parts[0], $parts[1]];
         }
         return ['redis', $name ?: 'default'];

@@ -44,7 +44,7 @@ class PushHorizonEventToHub {
             return;
         }
 
-        $payload['service_name'] = config('horizonhub.service_name');
+        $payload['service_name'] = \config('horizonhub.service_name');
 
         try {
             $this->client->push($payload);
