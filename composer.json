@@ -1,6 +1,6 @@
 {
     "name": "horizonhub/agent",
-    "version": "1.2.5",
+    "version": "1.3.0",
     "description": "Horizon Hub Agent - push Horizon events to Horizon Hub",
     "type": "laravel-package",
     "license": "MIT",
