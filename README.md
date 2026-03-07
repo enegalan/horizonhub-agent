@@ -4,9 +4,9 @@ Laravel package that pushes Laravel Horizon events to a Horizon Hub instance and
 
 ## Requirements
 
-- PHP 8.2+
+- PHP 8.0+
 - Laravel 10, 11, or 12
-- Laravel Horizon (recommended; events are only pushed when Horizon is installed)
+- Laravel Horizon (necessary; events are only pushed when Horizon is installed)
 
 ## Installation
 
