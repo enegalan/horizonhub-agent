@@ -121,8 +121,8 @@ class EventPayloadBuilder {
         $conn = \property_exists($event, 'connectionName') ? $event->connectionName : \config('horizonhub.queues.name');
         $queueName = \property_exists($event, 'queue') ? $event->queue : \config('horizonhub.queues.queue');
         $queue = "$conn.$queueName";
-        $decoded = \isset($event->payload->decoded) ? $event->payload->decoded : [];
-        $name = \isset($decoded['displayName']) ? $decoded['displayName'] : null;
+        $decoded = isset($event->payload->decoded) ?? $event->payload->decoded;
+        $name = isset($decoded['displayName']) ?? $decoded['displayName'];
         $eventType = static::getEventType('processing');
         $result = [
             'event_type' => $eventType,
