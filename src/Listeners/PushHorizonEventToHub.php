@@ -16,10 +16,8 @@ use Illuminate\Queue\Events\QueueResumed;
 use Laravel\Horizon\Events\SupervisorLooped;
 
 class PushHorizonEventToHub {
-    /**
-     * @var HubClient
-     */
-    private $client;
+    /** The Horizon Hub client to push events to. */
+    private HubClient $client;
 
     /**
      * Construct the push horizon event to hub listener.

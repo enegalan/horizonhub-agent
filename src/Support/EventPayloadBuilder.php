@@ -5,6 +5,9 @@ namespace HorizonHub\Agent\Support;
 use Illuminate\Support\Str;
 
 class EventPayloadBuilder {
+    /** Max age in seconds for entries in $jobStartedAt; older entries are pruned on insert. */
+    private const JOB_STARTED_AT_TTL_SECONDS = 86400;
+
     /** @var array<string, float> job_id => microtime when JobProcessing was built */
     private static array $jobStartedAt = [];
 
@@ -15,7 +18,12 @@ class EventPayloadBuilder {
      * @return string
      */
     private static function getEventType(string $eventStatus): string {
-        return \array_search($eventStatus, \config('horizonhub.event_types_status'));
+        $eventTypes = \config('horizonhub.event_types_status');
+        $key = \array_search($eventStatus, $eventTypes, true);
+        if ($key === false) {
+            throw new \InvalidArgumentException("Event status \"{$eventStatus}\" not found in horizonhub.event_types_status.");
+        }
+        return \is_string($key) ? $key : (string) $key;
     }
 
     /**
@@ -49,6 +57,8 @@ class EventPayloadBuilder {
 
     /**
      * Build the payload for the job deleted event.
+     * Intentionally sent as JobProcessed: the hub treats "job finished successfully"
+     * and "job deleted after success" the same, and the API does not define JobDeleted.
      *
      * @param object $event
      * @return array
@@ -97,6 +107,7 @@ class EventPayloadBuilder {
         $payload = static::baseJobPayload($event, $job, static::getEventType('processing'));
         $jobId = $payload['job_id'] ?? '';
         if ($jobId !== '') {
+            static::pruneExpiredJobStartedAt();
             self::$jobStartedAt[$jobId] = \microtime(true);
         }
         return $payload;
@@ -112,13 +123,16 @@ class EventPayloadBuilder {
     public static function fromJobReserved(object $event): array {
         $jobId = \method_exists($event->payload, 'id') ? (string) $event->payload->id() : '';
         if ($jobId !== '') {
+            static::pruneExpiredJobStartedAt();
             self::$jobStartedAt[$jobId] = microtime(true);
         }
         $conn = \property_exists($event, 'connectionName') ? $event->connectionName : \config('horizonhub.queues.name');
         $queueName = \property_exists($event, 'queue') ? $event->queue : \config('horizonhub.queues.queue');
         $queue = "$conn.$queueName";
-        $decoded = isset($event->payload->decoded) ?? $event->payload->decoded;
-        $name = isset($decoded['displayName']) ?? $decoded['displayName'];
+        $decoded = $event->payload->decoded ?? [];
+        $decoded = \is_array($decoded) ? $decoded : [];
+        $name = $decoded['displayName'] ?? null;
+        $name = \is_string($name) ? $name : null;
         $eventType = static::getEventType('processing');
         $result = [
             'event_type' => $eventType,
@@ -129,7 +143,7 @@ class EventPayloadBuilder {
             'name' => $name,
             'payload' => $decoded,
         ];
-        $queuedAt = static::queuedAtFromPayload(\is_array($decoded) ? $decoded : []);
+        $queuedAt = static::queuedAtFromPayload($decoded);
         if ($queuedAt !== null) {
             $result['queued_at'] = $queuedAt;
         }
@@ -160,6 +174,20 @@ class EventPayloadBuilder {
      * @param string $jobId
      * @return float|null
      */
+    /**
+     * Remove entries from $jobStartedAt older than JOB_STARTED_AT_TTL_SECONDS.
+     *
+     * @return void
+     */
+    private static function pruneExpiredJobStartedAt(): void {
+        $now = \microtime(true);
+        foreach (self::$jobStartedAt as $id => $start) {
+            if ($now - $start > self::JOB_STARTED_AT_TTL_SECONDS) {
+                unset(self::$jobStartedAt[$id]);
+            }
+        }
+    }
+
     private static function popRuntimeSeconds(string $jobId): ?float {
         if ($jobId === '' || ! isset(self::$jobStartedAt[$jobId])) {
             return null;
