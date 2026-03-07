@@ -2,6 +2,7 @@
 
 namespace HorizonHub\Agent;
 
+use HorizonHub\Agent\Console\HorizonHubInstallCommand;
 use HorizonHub\Agent\Http\Controllers\HorizonHubActionController;
 use HorizonHub\Agent\Listeners\PushHorizonEventToHub;
 use Illuminate\Support\Facades\Event;
@@ -14,6 +15,10 @@ class HorizonHubAgentServiceProvider extends ServiceProvider {
             $this->publishes([
                 __DIR__ . '/../config/horizonhub.php' => config_path('horizonhub.php'),
             ], 'horizon-hub-agent-config');
+
+            $this->commands([
+                HorizonHubInstallCommand::class,
+            ]);
         }
 
         $this->registerEventListeners();

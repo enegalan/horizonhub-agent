@@ -14,10 +14,10 @@ Laravel package that pushes Laravel Horizon events to a Horizon Hub instance and
 composer require horizonhub/agent
 ```
 
-Publish config:
+Install (publish config):
 
 ```bash
-php artisan vendor:publish --tag=horizon-hub-agent-config
+php artisan horizonhub:install
 ```
 
 Configure `.env`:
