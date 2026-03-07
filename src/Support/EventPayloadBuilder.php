@@ -195,16 +195,43 @@ class EventPayloadBuilder {
     }
 
     /**
+     * Get connection name from a pause/resume event (Illuminate uses "connection", Horizon "connectionName").
+     *
+     * @param object $event
+     * @return string
+     */
+    private static function connectionFromPauseResumeEvent(object $event): string {
+        if (\property_exists($event, 'connectionName') && $event->connectionName !== '') {
+            return (string) $event->connectionName;
+        }
+        if (\property_exists($event, 'connection') && $event->connection !== '') {
+            return (string) $event->connection;
+        }
+        return (string) \config('horizonhub.queues.name');
+    }
+
+    /**
+     * Get queue name from a pause/resume event.
+     *
+     * @param object $event
+     * @return string
+     */
+    private static function queueNameFromPauseResumeEvent(object $event): string {
+        if (\property_exists($event, 'queue') && $event->queue !== '') {
+            return (string) $event->queue;
+        }
+        return (string) \config('horizonhub.queues.queue');
+    }
+
+    /**
      * Build the payload for the queue paused event.
      *
      * @param object $event
      * @return array
      */
     public static function fromQueuePaused(object $event): array {
-        // TODO: Test if this this method is called
-        \Log::debug('Testing if this method is called fromQueuePaused', ['event' => $event]);
-        $connection = \property_exists($event, 'connectionName') ? $event->connectionName : \config('horizonhub.queues.name');
-        $queue = \property_exists($event, 'queue') ? $event->queue : \config('horizonhub.queues.queue');
+        $connection = static::connectionFromPauseResumeEvent($event);
+        $queue = static::queueNameFromPauseResumeEvent($event);
         $eventType = static::getEventType('paused');
         return [
             'event_type' => $eventType,
@@ -221,10 +248,8 @@ class EventPayloadBuilder {
      * @return array
      */
     public static function fromQueueResumed(object $event): array {
-        // TODO: Test if this this method is called
-        \Log::debug('Testing if this method is called fromQueueResumed', ['event' => $event]);
-        $connection = \property_exists($event, 'connectionName') ? $event->connectionName : \config('horizonhub.queues.name');
-        $queue = \property_exists($event, 'queue') ? $event->queue : \config('horizonhub.queues.queue');
+        $connection = static::connectionFromPauseResumeEvent($event);
+        $queue = static::queueNameFromPauseResumeEvent($event);
         $eventType = static::getEventType('resumed');
         return [
             'event_type' => $eventType,

@@ -34,17 +34,15 @@ class HorizonHubAgentServiceProvider extends ServiceProvider {
         $listener_class = PushHorizonEventToHub::class;
 
         $events = [
-            \Laravel\Horizon\Events\JobProcessed::class,
             \Laravel\Horizon\Events\JobDeleted::class,
             \Laravel\Horizon\Events\JobFailed::class,
-            \Laravel\Horizon\Events\JobProcessing::class,
             \Laravel\Horizon\Events\JobReserved::class,
             \Illuminate\Queue\Events\JobProcessed::class,
             \Illuminate\Queue\Events\JobFailed::class,
             \Illuminate\Queue\Events\JobProcessing::class,
             \Laravel\Horizon\Events\SupervisorLooped::class,
-            \Laravel\Horizon\Events\QueuePaused::class,
-            \Laravel\Horizon\Events\QueueResumed::class,
+            \Illuminate\Queue\Events\QueuePaused::class,
+            \Illuminate\Queue\Events\QueueResumed::class,
         ];
 
         foreach ($events as $event) {

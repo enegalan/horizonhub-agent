@@ -6,15 +6,13 @@ use HorizonHub\Agent\Support\EventPayloadBuilder;
 use HorizonHub\Agent\Support\HubClient;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\Events\JobFailed as IlluminateJobFailed;
-use Illuminate\Queue\Events\JobProcessed as IlluminateJobProcessed;
-use Illuminate\Queue\Events\JobProcessing as IlluminateJobProcessing;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobProcessing;
 use Laravel\Horizon\Events\JobDeleted;
 use Laravel\Horizon\Events\JobFailed;
-use Laravel\Horizon\Events\JobProcessed;
-use Laravel\Horizon\Events\JobProcessing;
 use Laravel\Horizon\Events\JobReserved;
-use Laravel\Horizon\Events\QueuePaused;
-use Laravel\Horizon\Events\QueueResumed;
+use Illuminate\Queue\Events\QueuePaused;
+use Illuminate\Queue\Events\QueueResumed;
 use Laravel\Horizon\Events\SupervisorLooped;
 
 class PushHorizonEventToHub {
@@ -80,10 +78,10 @@ class PushHorizonEventToHub {
             'event' => $event::class,
         ]);
         return match ($event::class) {
-            JobProcessed::class, IlluminateJobProcessed::class => EventPayloadBuilder::fromJobProcessed($event),
+            JobProcessed::class => EventPayloadBuilder::fromJobProcessed($event),
             JobDeleted::class => EventPayloadBuilder::fromJobDeleted($event),
             JobFailed::class, IlluminateJobFailed::class => EventPayloadBuilder::fromJobFailed($event),
-            JobProcessing::class, IlluminateJobProcessing::class => EventPayloadBuilder::fromJobProcessing($event),
+            JobProcessing::class => EventPayloadBuilder::fromJobProcessing($event),
             JobReserved::class => EventPayloadBuilder::fromJobReserved($event),
             SupervisorLooped::class => EventPayloadBuilder::fromSupervisorLooped($event),
             QueuePaused::class => EventPayloadBuilder::fromQueuePaused($event),
