@@ -33,6 +33,19 @@ class PushHorizonEventToHub {
     }
 
     /**
+     * Validate the Horizon Hub Agent configuration.
+     *
+     * @return bool
+     */
+    public function validate(): bool {
+        $valid = !empty(\config('horizonhub.hub_url')) && !empty(\config('horizonhub.api_key'));
+        if (!$valid) {
+            Log::warning('Horizon Hub Agent: HORIZON_HUB_URL or HORIZON_HUB_API_KEY not set; events will not be sent to Horizon Hub Dashboard.');
+        }
+        return $valid;
+    }
+
+    /**
      * Handle the push horizon event to hub.
      *
      * @param object $event

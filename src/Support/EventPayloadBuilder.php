@@ -9,14 +9,36 @@ class EventPayloadBuilder {
     private static array $jobStartedAt = [];
 
     /**
+     * Get the event type from the event status.
+     *
+     * @param string $eventStatus
+     * @return string
+     */
+    private static function getEventType(string $eventStatus): string {
+        return \array_search($eventStatus, \config('horizonhub.event_types_status'));
+    }
+
+    /**
+     * Get the event status from the event type.
+     *
+     * @param string $eventType
+     * @return string
+     */
+    private static function getEventStatus(string $eventType): string {
+        return \config("horizonhub.event_types_status.$eventType");
+    }
+
+    /**
      * Build the payload for the job processed event.
      *
      * @param object $event
      * @return array
      */
     public static function fromJobProcessed(object $event): array {
+        // TODO: Test if this this method is called
+        \Log::debug('Testing if this method is called fromJobProcessed', ['event' => $event]);
         $job = static::jobFromEvent($event);
-        $base = static::baseJobPayload($event, $job, 'JobProcessed', 'processed');
+        $base = static::baseJobPayload($event, $job, static::getEventType('processed'));
         $payload = \array_merge($base, [
             'processed_at' => \now()->toIso8601String(),
         ]);
@@ -35,7 +57,7 @@ class EventPayloadBuilder {
      */
     public static function fromJobDeleted(object $event): array {
         $job = static::jobFromEvent($event);
-        $base = static::baseJobPayload($event, $job, 'JobProcessed', 'processed');
+        $base = static::baseJobPayload($event, $job, static::getEventType('processed'));
         $payload = \array_merge($base, [
             'processed_at' => \now()->toIso8601String(),
         ]);
@@ -46,10 +68,16 @@ class EventPayloadBuilder {
         return $payload;
     }
 
+    /**
+     * Build the payload for the job failed event.
+     *
+     * @param object $event
+     * @return array
+     */
     public static function fromJobFailed(object $event): array {
         $job = static::jobFromEvent($event);
-        $base = static::baseJobPayload($event, $job, 'JobFailed', 'failed');
-        $payload = array_merge($base, [
+        $base = static::baseJobPayload($event, $job, static::getEventType('failed'));
+        $payload = \array_merge($base, [
             'failed_at' => \now()->toIso8601String(),
             'exception' => static::formatException($event->exception ?? null),
         ]);
@@ -60,9 +88,17 @@ class EventPayloadBuilder {
         return $payload;
     }
 
+    /**
+     * Build the payload for the job processing event.
+     *
+     * @param object $event
+     * @return array
+     */
     public static function fromJobProcessing(object $event): array {
+        // TODO: Test if this this method is called
+        \Log::debug('Testing if this method is called fromJobProcessing', ['event' => $event]);
         $job = static::jobFromEvent($event);
-        $payload = static::baseJobPayload($event, $job, 'JobProcessing', 'processing');
+        $payload = static::baseJobPayload($event, $job, static::getEventType('processing'));
         $jobId = $payload['job_id'] ?? '';
         if ($jobId !== '') {
             self::$jobStartedAt[$jobId] = \microtime(true);
@@ -73,22 +109,26 @@ class EventPayloadBuilder {
     /**
      * Build JobProcessing payload from Horizon's JobReserved and record start time for runtime.
      * Horizon fires JobReserved when a worker picks up a job; JobDeleted when it finishes.
+     *
+     * @param object $event
+     * @return array
      */
     public static function fromJobReserved(object $event): array {
         $jobId = \method_exists($event->payload, 'id') ? (string) $event->payload->id() : '';
         if ($jobId !== '') {
             self::$jobStartedAt[$jobId] = microtime(true);
         }
-        $conn = \property_exists($event, 'connectionName') ? $event->connectionName : 'redis';
-        $queueName = \property_exists($event, 'queue') ? $event->queue : 'default';
-        $queue = $conn . '.' . $queueName;
-        $decoded = isset($event->payload->decoded) ? $event->payload->decoded : [];
-        $name = isset($decoded['displayName']) ? $decoded['displayName'] : null;
+        $conn = \property_exists($event, 'connectionName') ? $event->connectionName : \config('horizonhub.queues.name');
+        $queueName = \property_exists($event, 'queue') ? $event->queue : \config('horizonhub.queues.queue');
+        $queue = "$conn.$queueName";
+        $decoded = \isset($event->payload->decoded) ? $event->payload->decoded : [];
+        $name = \isset($decoded['displayName']) ? $decoded['displayName'] : null;
+        $eventType = static::getEventType('processing');
         $result = [
-            'event_type' => 'JobProcessing',
+            'event_type' => $eventType,
             'job_id' => $jobId,
             'queue' => $queue,
-            'status' => 'processing',
+            'status' => static::getEventStatus($eventType),
             'attempts' => 0,
             'name' => $name,
             'payload' => $decoded,
@@ -120,6 +160,9 @@ class EventPayloadBuilder {
 
     /**
      * Returns runtime in seconds since JobProcessing and removes the stored start time.
+     *
+     * @param string $jobId
+     * @return float|null
      */
     private static function popRuntimeSeconds(string $jobId): ?float {
         if ($jobId === '' || ! isset(self::$jobStartedAt[$jobId])) {
@@ -138,15 +181,16 @@ class EventPayloadBuilder {
      * @return array
      */
     public static function fromSupervisorLooped(object $event): array {
-        $supervisorName = 'default';
+        $supervisorName = \config('horizonhub.queues.queue');
         if (\property_exists($event, 'supervisor') && isset($event->supervisor)) {
-            $supervisorName = isset($event->supervisor->name) ? (string) $event->supervisor->name : 'default';
+            $supervisorName = isset($event->supervisor->name) ? (string) $event->supervisor->name : \config('horizonhub.queues.queue');
         }
+        $eventType = static::getEventType('looped');
         return [
-            'event_type' => 'SupervisorLooped',
+            'event_type' => $eventType,
             'job_id' => '',
             'queue' => $supervisorName,
-            'status' => 'looped',
+            'status' => static::getEventStatus($eventType),
         ];
     }
 
@@ -157,13 +201,16 @@ class EventPayloadBuilder {
      * @return array
      */
     public static function fromQueuePaused(object $event): array {
-        $connection = \property_exists($event, 'connectionName') ? $event->connectionName : 'redis';
-        $queue = \property_exists($event, 'queue') ? $event->queue : 'default';
+        // TODO: Test if this this method is called
+        \Log::debug('Testing if this method is called fromQueuePaused', ['event' => $event]);
+        $connection = \property_exists($event, 'connectionName') ? $event->connectionName : \config('horizonhub.queues.name');
+        $queue = \property_exists($event, 'queue') ? $event->queue : \config('horizonhub.queues.queue');
+        $eventType = static::getEventType('paused');
         return [
-            'event_type' => 'QueuePaused',
+            'event_type' => $eventType,
             'job_id' => '',
             'queue' => "$connection.$queue",
-            'status' => 'paused',
+            'status' => static::getEventStatus($eventType),
         ];
     }
 
@@ -174,13 +221,16 @@ class EventPayloadBuilder {
      * @return array
      */
     public static function fromQueueResumed(object $event): array {
-        $connection = \property_exists($event, 'connectionName') ? $event->connectionName : 'redis';
-        $queue = \property_exists($event, 'queue') ? $event->queue : 'default';
+        // TODO: Test if this this method is called
+        \Log::debug('Testing if this method is called fromQueueResumed', ['event' => $event]);
+        $connection = \property_exists($event, 'connectionName') ? $event->connectionName : \config('horizonhub.queues.name');
+        $queue = \property_exists($event, 'queue') ? $event->queue : \config('horizonhub.queues.queue');
+        $eventType = static::getEventType('resumed');
         return [
-            'event_type' => 'QueueResumed',
+            'event_type' => $eventType,
             'job_id' => '',
             'queue' => "$connection.$queue",
-            'status' => 'resumed',
+            'status' => static::getEventStatus($eventType),
         ];
     }
 
@@ -200,20 +250,18 @@ class EventPayloadBuilder {
      * @param object $event
      * @param object|null $job
      * @param string $eventType
-     * @param string $status
      * @return array
      */
-    private static function baseJobPayload(object $event, ?object $job, string $eventType, string $status): array {
-        $queue = 'redis.default';
+    private static function baseJobPayload(object $event, ?object $job, string $eventType): array {
+        $queue = \config('horizonhub.queues.name') . '.' . \config('horizonhub.queues.queue');
         $attempts = 0;
         $jobId = '';
         $payload = [];
 
         if ($job !== null) {
             if (\method_exists($job, 'getQueue')) {
-                $q = $job->getQueue();
-                $conn = property_exists($event, 'connectionName') ? $event->connectionName : 'redis';
-                $queue = "$conn." . ($q ?: 'default');
+                $conn = \property_exists($event, 'connectionName') ? $event->connectionName : \config('horizonhub.queues.name');
+                $queue = "$conn." . ($job->getQueue() ?: \config('horizonhub.queues.queue'));
             }
             if (\method_exists($job, 'attempts')) {
                 $attempts = (int) $job->attempts();
@@ -232,7 +280,7 @@ class EventPayloadBuilder {
             }
         }
 
-        if ($jobId === '') {
+        if (empty($jobId)) {
             $jobId = Str::uuid()->toString();
         }
 
@@ -243,7 +291,7 @@ class EventPayloadBuilder {
             'event_type' => $eventType,
             'job_id' => $jobId,
             'queue' => $queue,
-            'status' => $status,
+            'status' => static::getEventStatus($eventType),
             'attempts' => $attempts,
             'name' => $name,
             'payload' => $payload,
@@ -259,26 +307,18 @@ class EventPayloadBuilder {
      * Get the queued at from the payload.
      *
      * @param array<string, mixed> $payload Laravel job payload (decoded)
+     * @return string|null
      */
     private static function queuedAtFromPayload(array $payload): ?string {
-        /** @var int|null $createdAt */
-        $createdAt = isset($payload['created_at']) ? (int) $payload['created_at'] : null;
-        if ($createdAt > 0) {
-            return \date('c', $createdAt);
+        $timestamp = $payload['created_at']
+            ?? $payload['available_at']
+            ?? $payload['pushedAt']
+            ?? null;
+
+        if (!\is_numeric($timestamp) || (float) $timestamp <= 0) {
+            return null;
         }
-        /** @var int|null $availableAt */
-        $availableAt = isset($payload['available_at']) ? (int) $payload['available_at'] : null;
-        if ($availableAt > 0) {
-            return \date('c', $availableAt);
-        }
-        /** @var int|float|string|null $pushedAt */
-        $pushedAt = isset($payload['pushedAt']) ? $payload['pushedAt'] : null;
-        if ($pushedAt !== null && \is_numeric($pushedAt)) {
-            $pushedAtFloat = (float) $pushedAt;
-            if ($pushedAtFloat > 0) {
-                return \date('c', (int) $pushedAtFloat);
-            }
-        }
-        return null;
+
+        return \date('c', (int) $timestamp);
     }
 }

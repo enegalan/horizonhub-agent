@@ -25,7 +25,12 @@ class HorizonHubAgentServiceProvider extends ServiceProvider {
     }
 
     private function registerEventListeners(): void {
+        /** @var PushHorizonEventToHub $listener */
         $listener = PushHorizonEventToHub::class;
+
+        if (!$listener->validate()) {
+            return;
+        }
 
         $events = [
             \Laravel\Horizon\Events\JobProcessed::class,

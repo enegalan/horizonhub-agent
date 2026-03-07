@@ -87,6 +87,6 @@ class HorizonHubActionController {
             $parts = \explode('.', $name, 2);
             return [$parts[0], $parts[1]];
         }
-        return ['redis', $name ?: 'default'];
+        return [\config('horizonhub.queues.name'), $name ?: \config('horizonhub.queues.queue')];
     }
 }
