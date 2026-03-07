@@ -35,8 +35,6 @@ class EventPayloadBuilder {
      * @return array
      */
     public static function fromJobProcessed(object $event): array {
-        // TODO: Test if this this method is called
-        \Log::debug('Testing if this method is called fromJobProcessed', ['event' => $event]);
         $job = static::jobFromEvent($event);
         $base = static::baseJobPayload($event, $job, static::getEventType('processed'));
         $payload = \array_merge($base, [
@@ -95,8 +93,6 @@ class EventPayloadBuilder {
      * @return array
      */
     public static function fromJobProcessing(object $event): array {
-        // TODO: Test if this this method is called
-        \Log::debug('Testing if this method is called fromJobProcessing', ['event' => $event]);
         $job = static::jobFromEvent($event);
         $payload = static::baseJobPayload($event, $job, static::getEventType('processing'));
         $jobId = $payload['job_id'] ?? '';

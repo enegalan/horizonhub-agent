@@ -74,9 +74,6 @@ class PushHorizonEventToHub {
      * @return array|null
      */
     private function buildPayload(object $event): ?array {
-        Log::info('Horizon Hub Agent: building payload for event', [
-            'event' => $event::class,
-        ]);
         return match ($event::class) {
             JobProcessed::class => EventPayloadBuilder::fromJobProcessed($event),
             JobDeleted::class => EventPayloadBuilder::fromJobDeleted($event),
