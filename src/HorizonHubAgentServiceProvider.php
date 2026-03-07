@@ -14,7 +14,7 @@ class HorizonHubAgentServiceProvider extends ServiceProvider {
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__ . '/../config/horizonhub.php' => config_path('horizonhub.php'),
-            ], 'horizon-hub-agent-config');
+            ], 'horizonhub-agent-config');
 
             $this->commands([
                 HorizonHubInstallCommand::class,
@@ -60,11 +60,11 @@ class HorizonHubAgentServiceProvider extends ServiceProvider {
     private function registerRoutes(): void {
         $middleware = [\HorizonHub\Agent\Http\Middleware\ValidateHubSignature::class];
 
-        Route::middleware($middleware)->prefix('horizon-hub')->group(function (): void {
-            Route::post('jobs/{id}/retry', [HorizonHubActionController::class, 'retry'])->name('horizon-hub.jobs.retry');
-            Route::delete('jobs/{id}/delete', [HorizonHubActionController::class, 'delete'])->name('horizon-hub.jobs.delete');
-            Route::post('queues/{name}/pause', [HorizonHubActionController::class, 'pause'])->name('horizon-hub.queues.pause');
-            Route::post('queues/{name}/resume', [HorizonHubActionController::class, 'resume'])->name('horizon-hub.queues.resume');
+        Route::middleware($middleware)->prefix('horizonhub')->group(function (): void {
+            Route::post('jobs/{id}/retry', [HorizonHubActionController::class, 'retry'])->name('horizonhub.jobs.retry');
+            Route::delete('jobs/{id}/delete', [HorizonHubActionController::class, 'delete'])->name('horizonhub.jobs.delete');
+            Route::post('queues/{name}/pause', [HorizonHubActionController::class, 'pause'])->name('horizonhub.queues.pause');
+            Route::post('queues/{name}/resume', [HorizonHubActionController::class, 'resume'])->name('horizonhub.queues.resume');
         });
     }
 }

@@ -26,7 +26,7 @@ class HorizonHubInstallCommand extends Command {
         $this->info('Publishing Horizon Hub Agent configuration...');
 
         $this->call('vendor:publish', [
-            '--tag' => 'horizon-hub-agent-config',
+            '--tag' => 'horizonhub-agent-config',
         ]);
 
         $this->info('Horizon Hub Agent configuration published successfully.');

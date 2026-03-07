@@ -43,10 +43,10 @@ Events are sent to the Hub as signed HTTP POST requests to `/api/v1/events`.
 
 The Hub calls these routes on your application (with signature verification):
 
-- `POST /horizon-hub/jobs/{id}/retry` – retry a failed job
-- `DELETE /horizon-hub/jobs/{id}/delete` – remove a failed job
-- `POST /horizon-hub/queues/{name}/pause` – pause a queue
-- `POST /horizon-hub/queues/{name}/resume` – resume a queue
+- `POST /horizonhub/jobs/{id}/retry` – retry a failed job
+- `DELETE /horizonhub/jobs/{id}/delete` – remove a failed job
+- `POST /horizonhub/queues/{name}/pause` – pause a queue
+- `POST /horizonhub/queues/{name}/resume` – resume a queue
 
 Ensure your application's `base_url` registered in the Hub is reachable by the Hub server.
 
